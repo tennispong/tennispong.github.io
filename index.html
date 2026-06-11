@@ -1,438 +1,341 @@
-<html lang="en-us"><script src="https://pygame-web.github.io/cdn/0.9.3/pythons.js" type=module id="site" data-python="python3.12" data-LINES=42 data-COLUMNS=132 data-os="vtx,snd,gui" async defer>#<!--
-
-print("""
-Loading pong from pong.apk
-    Pygbag Version : 0.9.3
-    Template Version : 0.9.3
-    Python  : 3.12
-    CDN URL : https://pygame-web.github.io/cdn/0.9.3/
-    Screen  : 1280x720
-    Title   : pong
-    Folder  : pong
-    Authors : pgw
-    SPDX-License-Identifier: cookiecutter.spdx
-
-""")
-
-import sys
-import asyncio
-import platform
-import json
-from pathlib import Path
-
-# do not rename
-async def custom_site():
-    import embed
-    platform.document.body.style.background = "#7f7f7f"
-
-    platform.window.transfer.hidden = true
-    platform.window.canvas.style.visibility = "visible"
-
-
-    bundle = "pong"
-
-    # the C or js loader could do that but be explicit.
-    appdir = Path(f"/data/data/{bundle}") # /data/data/pong
-    appdir.mkdir()
-
-
-    # unpack filesystem from compressed archive into work dir
-    if platform.window.location.host.find('.itch.zone')>0:
-        import zipfile
-        async with platform.fopen("pong.apk", "rb") as archive:
-            with zipfile.ZipFile(archive) as zip_ref:
-                zip_ref.extractall(appdir.as_posix())
-    else:
-        import tarfile
-        async with platform.fopen("pong.tar.gz", "rb") as archive:
-            tar = tarfile.open(fileobj=archive, mode="r:gz")
-            tar.extractall(path=appdir.as_posix(), filter='tar')
-            tar.close()
-
-    # preloader will change to work dir and prepend it to sys.path
-    platform.run_main(PyConfig, loaderhome= appdir / "assets", loadermain=None)
-
-
-    # wait preloading complete : that includes images and wasm compilation of bundled modules
-    while embed.counter()<0:
-        await asyncio.sleep(.1)
-
-    main = appdir / "assets" / "main.py"
-
-    # TODO: test for window.webkitAudioContext and block aio loop until gesture if accessing media manager play
-    # before a gesture is recorded ( touch or click )
-
-    # test/wait user media interaction
-    if not platform.window.MM.UME:
-
-        # now that apk is mounted we have access to font cache
-        # but we need to fill __file__ that is not yet set
-        __import__(__name__).__file__ = main
-
-        # now make a prompt
-        msg  = "Ready to start ! Please click/touch page"
-        platform.window.infobox.innerText = msg
-        print("\n"*4, f"    * Waiting for media user engagement. {msg} *" , "\n"*4)
-
-        while not platform.window.MM.UME:
-            await asyncio.sleep(.1)
-
-    # start async top level machinery if not started and add a console in any case if requested.
-    await TopLevel_async_handler.start_toplevel(platform.shell, console=window.python.config.debug)
-
-    # now that apk is mounted we have access to font cache
-    # but we need to fill __file__/__name__ that are not yet set
-    __import__(__name__).__file__ = main
-
-
-    def ui_callback(pkg):
-        platform.window.infobox.innerText = f"installing {pkg}"
-
-    await shell.source(main, callback=ui_callback)
-
-    # if you don't reach that step
-    # your main.py has an infinite sync loop somewhere !
-
-    platform.window.infobox.style.display = "none"
-    platform.window.config.gui_divider = 1
-    platform.window.window_resize()
-    print("default.tmpl: done")
-
-    shell.interactive()
-
-asyncio.run( custom_site() )
-
-
-
-
-
-
-
-
-
-
-
-
-# BEGIN BLOCK
-#
-# now this is the html part you can (and should) customize
-# It is not mandatory : pygame-script when it reads the first line (also called
-# shebang ) of above code create absolute minimal widget set
-# required for running with default rules
-#
-# do not alter that comment block it is separating python code from html code
-# =============================================================================
-# --></script><head><!--
-//=============================================================================
-//
-//
-//
-//
-//
-//
-//
-
-    {%- if cookiecutter.comment != "" -%}
-{{cookiecutter.comment}}
-    {% endif %}
-
---><script type="application/javascript">
-// END BLOCK
-
-
-
-// this dict is available under PyConfig.config from __main__
-
-config = {
-    xtermjs : "1" ,
-    _sdl2 : "canvas",
-    user_canvas : 0,
-    user_canvas_managed : 0,
-    gui_divider : 2,
-    ume_block : 1,
-    can_close : 0,
-    archive : "pong",
-    gui_debug : 2,
-    cdn : "https://pygame-web.github.io/cdn/0.9.3/",
-    autorun : 0,
-    PYBUILD : "3.12",
-    fb_ar   :  1.77,
-    fb_width : "1280",
-    fb_height : "720"
-}
-
-function show_infobox() {
-    infobox.style.display = "block";
-
-    // Measure box
-    const w = infobox.offsetWidth;
-    const h = infobox.offsetHeight;
-
-    // Center in viewport
-    const left = (window.innerWidth - w) / 2;
-    const top = (window.innerHeight - h) / 2;
-
-    infobox.style.left = left + "px";
-    infobox.style.top = top + "px";
-}
-
-</script>
-
-    <title>pong</title>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="viewport" content="height=device-height, initial-scale=1.0">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes"/>
-
-
-    <link rel="icon" type="image/png" href="favicon.png" sizes="16x16">
-
-    <style>
-        #status {
-            display: inline-block;
-            vertical-align: top;
-            margin-top: 20px;
-            margin-left: 30px;
-            font-weight: bold;
-            color: rgb(120, 120, 120);
-        }
-
-        #progress {
-            height: 20px;
-            width: 300px;
-        }
-
-        #infobox {
-            position: fixed; /* center relative to viewport */
-            background: green;
-            color: blue;
-            font-weight: bold;
-            padding: 12px 24px;
- /*           display: none; */
-            z-index: 999999;
-        }
-        div.emscripten { text-align: center; }
-        div.emscripten_border { border: 1px solid black; }
-        div.thick_border { border: 4px solid black; }
-
-        /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
-        /* average size of droid screen 470dp x 320dp  */
-        canvas.emscripten {
-            border: 0px none;
-            background-color: transparent;
-            width: 100%;
-            height: 100%;
-            z-index: 5;
-
-            padding: 0;
-            margin: 0 auto;
-
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            right: 0;
-        }
-
-        body {
-            font-family: arial;
-            margin: 0;
-            padding: none;
-            background-color:powderblue;
-        }
-
-        .topright{
-           position:absolute;
-           top:0px;
-           right:0px;
-        }
-
-        .bottomright {
-            position:absolute;
-            top: 40%;
-            right: 0px;
-        }
-
-        .center {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .trinfo{
-           position: relative;
-           right: 0px;
-           border: 1px solid black;
-        }
-
-        .framed{
-           position: relative;
-           top: 150px;
-           right: 10px;
-           border: 1px solid black;
-        }
-    </style>
-
-    <script>
-/*
-        if (navigator.serviceWorker)
-            navigator.serviceWorker.register("https://pygame-web.github.io/cdn/0.9.3/pygbag0.9.3.js")
-        else
-            console.warn("Service workers not supported")
-*/
-    </script>
-
-    <script src="https://pygame-web.github.io/cdn/0.9.3//browserfs.min.js"></script>
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tennis Pong</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+  canvas { display: block; cursor: none; }
+</style>
 </head>
-
 <body>
+<canvas id="c"></canvas>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const W = 1000, H = 600;
+canvas.width = W; canvas.height = H;
 
-    <div id="transfer" align=center>
-<!--        <div class="spinner" id='spinner'></div> -->
-        <div class="emscripten" id="status">Downloading...</div>
-        <div class="emscripten">
-            <progress value="0" max="100" id="progress"></progress>
-        </div>
-    </div>
+// Colors
+const COURT   = '#286e46';
+const YELLOW  = '#d2f53c';
+const WHITE   = '#ffffff';
+const SHADOW  = '#145030';
+const FRAME   = '#dc3232';
+const FRAME_SHINE = '#ff8282';
+const STR_MAIN  = '#e6e6b4';
+const STR_CROSS = '#c8c88c';
+const THROAT  = '#c82828';
+const HANDLE  = '#a06428';
+const GRIP_B  = '#232323';
+const GRIP_A  = '#3c3c3c';
+const BUTT    = '#505050';
 
+// Racket geometry
+const HEAD_W = 40, HEAD_H = 62;
+const NECK_LEN = 18, HANDLE_LEN = 58, HANDLE_W = 10, GRIP_LEN = 28, FRAME_W = 5;
+const SURF = 260, PIV = SURF / 2;
+const HEAD_CX = PIV + HANDLE_LEN + NECK_LEN + HEAD_W / 2 - 4;
 
+// Swing
+const WINDUP_A = 65, STRIKE_A = -95;
+const WINDUP_F = 5, STRIKE_F = 4, FOLLOW_F = 20;
 
-    <canvas class="emscripten" id="canvas"
-width="1px"
-height="1px"
-    oncontextmenu="event.preventDefault()" tabindex=1>
-    </canvas>
+function lerp(a,b,t){ return a+(b-a)*t; }
+function easeOut(t){ return 1-Math.pow(1-t,3); }
+function easeIn(t){ return t*t*t; }
 
-    <canvas class="emscripten" id="canvas3d"
-width="1280px"
-height="720px"
-    oncontextmenu="event.preventDefault()" tabindex=1 hidden>
-    </canvas>
+function updateSwing(phase, angle, pt, sd){
+  pt++;
+  if(phase==='windup'){
+    const t=Math.min(pt/WINDUP_F,1);
+    angle=lerp(0, sd*WINDUP_A, easeIn(t));
+    if(pt>=WINDUP_F){phase='strike';pt=0;}
+  } else if(phase==='strike'){
+    const t=Math.min(pt/STRIKE_F,1);
+    angle=lerp(sd*WINDUP_A, sd*STRIKE_A, easeOut(t));
+    if(pt>=STRIKE_F){phase='follow';pt=0;}
+  } else if(phase==='follow'){
+    const t=Math.min(pt/FOLLOW_F,1);
+    angle=lerp(sd*STRIKE_A, 0, easeOut(t));
+    if(pt>=FOLLOW_F){phase='idle';pt=0;angle=0;}
+  } else {
+    angle=0;
+  }
+  return {phase,angle,pt};
+}
 
-    <div id="infobox">Loading, please wait ...</div>
+function drawEllipseStroke(ctx, cx, cy, rx, ry, color, lw){
+  ctx.beginPath();
+  ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
+  ctx.strokeStyle=color; ctx.lineWidth=lw; ctx.stroke();
+}
+function drawEllipseFill(ctx, cx, cy, rx, ry, color){
+  ctx.beginPath();
+  ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
+  ctx.fillStyle=color; ctx.fill();
+}
 
-    <div id=html></div>
+function drawRacket(pivotX, pivotY, swingDeg, flip){
+  const off = document.createElement('canvas');
+  off.width = SURF; off.height = SURF;
+  const c = off.getContext('2d');
 
-    <div id=crt  class=bottomright >
+  const px = PIV, py = PIV;
+  const hcx = px + HANDLE_LEN + NECK_LEN + HEAD_W/2 - 4;
+  const hcy = py;
 
-        <div id="system" hidden>
-            <div class="button-container">
-                <button id="aiostop" disabled>AIO ⏏︎</button>
-                <button id="aiopaused_true" disabled>AIO ■</button>
-                <button id="aiopaused_false" disabled>AIO ▶</button>
-                <button id="pygame_mixer_music_pause" disabled>Music ■</button>
-            </div>
+  // head shadow
+  c.globalAlpha = 0.2;
+  drawEllipseFill(c, hcx+2, hcy+3, HEAD_W/2-1, HEAD_H/2-1, '#000');
+  c.globalAlpha = 1;
 
-            <div class="button-container">
-                <div id=load_min>min</div>
-                <div id=load_avg>avg</div>
-                <div id=load_max>max</div>
-              <button id="load_rst" disabled>RESET</button>
-            </div>
+  // frame (thick ellipse)
+  for(let th=FRAME_W; th>=1; th--){
+    const fac = 1 + th*0.02;
+    drawEllipseStroke(c, hcx, hcy, HEAD_W/2 - FRAME_W + th, HEAD_H/2 - FRAME_W + th, FRAME, 2);
+  }
+  c.beginPath();
+  c.ellipse(hcx,hcy,HEAD_W/2,HEAD_H/2,0,0,Math.PI*2);
+  c.strokeStyle=FRAME; c.lineWidth=FRAME_W+1; c.stroke();
+  // shine
+  c.beginPath();
+  c.ellipse(hcx,hcy,HEAD_W/2-1,HEAD_H/2-1,0,Math.PI*100/180,Math.PI*200/180);
+  c.strokeStyle=FRAME_SHINE; c.lineWidth=2; c.stroke();
 
-            <div id="level">(battery level unknown)</div>
-            <div id="stateBattery">(charging state unknown)</div>
+  // strings (clipped to head interior)
+  c.save();
+  c.beginPath();
+  c.ellipse(hcx,hcy,HEAD_W/2-FRAME_W,HEAD_H/2-FRAME_W,0,0,Math.PI*2);
+  c.clip();
+  const iLeft = hcx-(HEAD_W/2-FRAME_W), iRight = hcx+(HEAD_W/2-FRAME_W);
+  const iTop  = hcy-(HEAD_H/2-FRAME_W), iBot   = hcy+(HEAD_H/2-FRAME_W);
+  const iW = iRight-iLeft, iH = iBot-iTop;
+  c.strokeStyle=STR_MAIN; c.lineWidth=1;
+  for(let i=1;i<8;i++){
+    const sx=iLeft+i*iW/8;
+    c.beginPath(); c.moveTo(sx,iTop+2); c.lineTo(sx,iBot-2); c.stroke();
+  }
+  c.strokeStyle=STR_CROSS;
+  for(let i=1;i<10;i++){
+    const sy=iTop+i*iH/10;
+    c.beginPath(); c.moveTo(iLeft+2,sy); c.lineTo(iRight-2,sy); c.stroke();
+  }
+  c.restore();
 
-        </div>
+  // throat Y
+  const tx = hcx - HEAD_W/2;
+  const te = tx - NECK_LEN;
+  c.strokeStyle=THROAT; c.lineWidth=4;
+  c.beginPath(); c.moveTo(tx,hcy-9); c.lineTo(te+2,hcy-3); c.stroke();
+  c.beginPath(); c.moveTo(tx,hcy+9); c.lineTo(te+2,hcy+3); c.stroke();
+  drawEllipseFill(c, te, hcy, 5, 5, THROAT);
 
-        <div id=box class="emscripten_border" hidden=true>
+  // handle
+  const he = px;
+  c.beginPath();
+  c.moveTo(te, hcy-HANDLE_W/2-1);
+  c.lineTo(he+4, hcy-HANDLE_W/2);
+  c.lineTo(he, hcy-HANDLE_W/2+2);
+  c.lineTo(he, hcy+HANDLE_W/2-2);
+  c.lineTo(he+4, hcy+HANDLE_W/2);
+  c.lineTo(te, hcy+HANDLE_W/2+1);
+  c.closePath();
+  c.fillStyle=HANDLE; c.fill();
+  c.strokeStyle='#c89650'; c.lineWidth=1;
+  c.beginPath(); c.moveTo(te-2,hcy-HANDLE_W/2+1); c.lineTo(he+6,hcy-HANDLE_W/2+1); c.stroke();
 
-            <div id="info" class="trinfo"></div>
+  // grip bands
+  let gx=he+4; let tog=true;
+  while(gx < he+4+GRIP_LEN){
+    c.fillStyle=tog?GRIP_A:GRIP_B;
+    c.fillRect(gx, hcy-HANDLE_W/2, 5, HANDLE_W);
+    gx+=8; tog=!tog;
+  }
+  c.strokeStyle='#141414'; c.lineWidth=1;
+  c.strokeRect(he+4, hcy-HANDLE_W/2, GRIP_LEN, HANDLE_W);
 
-            <iframe id="iframe" class="framed" name="iframe"
-width="470px" height="90%"
-allowtransparency="true"
-style="z-index: 10;"
-style="background: #FFFFFF;"
-frameborder="1"
-                allowfullscreen="true"
-                webkitallowfullscreen="true"
-                msallowfullscreen="true"
-                mozallowfullscreen="true"
-                sandbox="allow-same-origin allow-top-navigation allow-scripts allow-pointer-lock"
-                allow="autoplay; fullscreen *; geolocation; microphone; camera; midi; monetization; xr-spatial-tracking; gamepad; gyroscope; accelerometer; xr; cross-origin-isolated"
-                src="https://pygame-web.github.io/cdn/0.9.3/empty.html"
-                scrolling="yes">
-            </iframe>
-        </div>
+  // butt cap
+  drawEllipseFill(c, he-3+4, hcy, 4, HANDLE_W/2+2, BUTT);
+  drawEllipseStroke(c, he-3+4, hcy, 3, HANDLE_W/2+1, '#787878', 1);
 
-    </div>
+  // now draw onto main canvas, rotated around pivot
+  ctx.save();
+  ctx.translate(pivotX, pivotY);
+  ctx.rotate(swingDeg * Math.PI/180);
+  if(flip){
+    ctx.scale(-1,1);
+  }
+  // pivot is at (PIV, PIV) in the offscreen canvas
+  ctx.drawImage(off, -PIV, -PIV);
+  ctx.restore();
+}
 
+function getHeadCenter(pivotX, pivotY, swingDeg, flip){
+  let dx = HEAD_CX - PIV;
+  if(flip) dx = -dx;
+  const rad = swingDeg * Math.PI/180;
+  return {
+    x: pivotX + dx*Math.cos(rad),
+    y: pivotY + dx*Math.sin(rad)
+  };
+}
 
-    <div id="dlg" hidden>
-        <input type="file" id="dlg_multifile" multiple accept="image/*">
-        <label for="dlg_multifile">Select files</label>
-    </div>
+function hitboxCollide(pivotX, pivotY, swingDeg, flip, bx, by, br){
+  const h = getHeadCenter(pivotX, pivotY, swingDeg, flip);
+  return bx+br > h.x-22 && bx-br < h.x+22 && by+br > h.y-34 && by-br < h.y+34;
+}
 
-    <div id="pyconsole">
-        <div id="terminal" tabIndex=1 align="left"></div>
-    </div>
+// Game state
+let p1x=6, p1y=H/2, p2x=W-6, p2y=H/2;
+let mx=W/4, my=H/2;
+const AI_SPEED=16, MAX_SPEED=24, BALL_R=12;
+let bx=W/2, by=H/2, bvx=6*(Math.random()<.5?1:-1), bvy=6*(Math.random()<.5?1:-1);
+let s1=0, s2=0;
 
-    <script type="application/javascript">
+let p1phase='idle',p1angle=0,p1pt=0,p1dir=1;
+let p2phase='idle',p2angle=0,p2pt=0,p2dir=1;
 
-    globalThis.__canvas_resized = (self, ecw, ech) => {
-        console.warn("TODO: panda3d canvas monitor", self, ecw, ech)
+canvas.addEventListener('mousemove', e=>{
+  const r=canvas.getBoundingClientRect();
+  mx=e.clientX-r.left; my=e.clientY-r.top;
+  mx=Math.max(6,Math.min(W/2-100,mx));
+  my=Math.max(40,Math.min(H-40,my));
+});
+
+function resetBall(){
+  bx=W/2; by=H/2;
+  bvx=6*(Math.random()<.5?1:-1);
+  bvy=6*(Math.random()<.5?1:-1);
+}
+
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+
+let lastMx=mx, lastMy=my;
+
+function update(){
+  const vx=mx-lastMx, vy=my-lastMy;
+  const mspeed=Math.hypot(vx,vy);
+  lastMx=p1x; lastMy=p1y;
+  p1x=mx; p1y=my;
+  const pvx=p1x-lastMx, pvy=p1y-lastMy;
+
+  // AI
+  const aiHeadX = p2x-92;
+  if(bvx>0){
+    let sx=bx,sy=by,svx=bvx,svy=bvy;
+    for(let i=0;i<600;i++){
+      sx+=svx; sy+=svy;
+      if(sy-BALL_R<=0){sy=BALL_R;svy=Math.abs(svy);}
+      if(sy+BALL_R>=H){sy=H-BALL_R;svy=-Math.abs(svy);}
+      if(sx>=aiHeadX) break;
     }
+    const dy=sy-p2y;
+    if(Math.abs(dy)>2) p2y+=Math.min(AI_SPEED,Math.abs(dy))*(dy>0?1:-1);
+  } else {
+    const dy=H/2-p2y;
+    if(Math.abs(dy)>2) p2y+=Math.min(AI_SPEED,Math.abs(dy))*(dy>0?1:-1);
+  }
+  p2y=clamp(p2y,40,H-40);
 
-    async function custom_onload(debug_hidden) {
-        // this is called before anything python is loaded
-        // make your js customization here
-        console.log(__FILE__, "custom_onload")
+  // ball
+  bx+=bvx; by+=bvy;
+  if(by-BALL_R<=0){by=BALL_R;bvy=Math.abs(bvy);}
+  if(by+BALL_R>=H){by=H-BALL_R;bvy=-Math.abs(bvy);}
+  bvx=clamp(bvx,-MAX_SPEED,MAX_SPEED);
+  bvy=clamp(bvy,-MAX_SPEED,MAX_SPEED);
 
-        pyconsole.hidden = debug_hidden
-        system.hidden = debug_hidden
-        transfer.hidden = debug_hidden
-        info.hidden = debug_hidden
-        box.hidden =  debug_hidden
+  // collisions
+  if(hitboxCollide(p1x,p1y,p1angle,false,bx,by,BALL_R) && bvx<0){
+    const boost=1.06+(mspeed/8)*0.08;
+    bvx=Math.abs(bvx)*boost;
+    bvy+=pvy*0.3;
+    p1dir=pvy>=0?1:-1;
+    p1phase='windup'; p1angle=0; p1pt=0;
+  }
+  if(hitboxCollide(p2x,p2y,p2angle,true,bx,by,BALL_R) && bvx>0){
+    const boost=1.05+(Math.abs(bvy)/10)*0.04;
+    bvx=-Math.abs(bvx)*boost;
+    p2dir=Math.random()<.5?1:-1;
+    p2phase='windup'; p2angle=0; p2pt=0;
+  }
 
-        show_infobox()
-    }
+  // swings
+  let r1=updateSwing(p1phase,p1angle,p1pt,p1dir);
+  p1phase=r1.phase; p1angle=r1.angle; p1pt=r1.pt;
+  let r2=updateSwing(p2phase,p2angle,p2pt,p2dir);
+  p2phase=r2.phase; p2angle=r2.angle; p2pt=r2.pt;
 
-    function custom_prerun(){
-        // no python main and no (MEMFS + VFS) yet.
-        console.log(__FILE__, "custom_prerun")
+  // score
+  if(bx<0){s2++;resetBall();}
+  else if(bx>W){s1++;resetBall();}
+}
 
-    }
+function draw(){
+  // court
+  ctx.fillStyle=COURT; ctx.fillRect(0,0,W,H);
 
-    function custom_postrun(){
-        // python main and no VFS filesystem yet.
-        console.log(__FILE__, "custom_postrun")
+  // dashed center line
+  ctx.fillStyle=WHITE;
+  for(let y=0;y<H;y+=40) ctx.fillRect(W/2-2,y,4,20);
 
-    }
+  // border
+  ctx.strokeStyle=WHITE; ctx.lineWidth=6;
+  ctx.strokeRect(3,3,W-6,H-6);
 
-    function debug() {
-        // allow to gain access to dev tools from js console
-        // but only on desktop. difficult to reach when in iframe
-        python.config.debug = true
-        custom_onload(false)
-        Module.PyRun_SimpleString("shell.uptime()")
-        window_resize()
-    }
+  // subtle left half tint
+  ctx.fillStyle='rgba(255,255,255,0.04)';
+  ctx.fillRect(0,0,W/2,H);
 
-    function info_inline(data){
-        document.getElementById("info").innerHTML = data
-    }
+  // rackets
+  drawRacket(p1x,p1y,p1angle,false);
+  drawRacket(p2x,p2y,p2angle,true);
 
-    function info_online(url) {
-        // display info about current APK
-        fetch( url /*, options */)
-            .then((response) => response.text())
-            .then((html) => {
-                info_inline(html);
-        })
-        .catch((error) => {
-            console.warn(error);
-        });
-    }
+  // ball shadow
+  ctx.beginPath();
+  ctx.ellipse(bx+5,by+BALL_R-4,BALL_R,BALL_R/2,0,0,Math.PI*2);
+  ctx.fillStyle=SHADOW; ctx.fill();
 
-    function frame_online(url) {
-        window.frames["iframe"].location = url;
-    }
+  // ball
+  ctx.beginPath();
+  ctx.arc(bx,by,BALL_R,0,Math.PI*2);
+  ctx.fillStyle=YELLOW; ctx.fill();
+  // seam
+  ctx.beginPath();
+  ctx.arc(bx,by,BALL_R-3,Math.PI*20/180,Math.PI*160/180);
+  ctx.strokeStyle='#aac814'; ctx.lineWidth=2; ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(bx,by,BALL_R-3,Math.PI*200/180,Math.PI*340/180);
+  ctx.stroke();
 
-    </script>
+  // score
+  ctx.fillStyle=WHITE;
+  ctx.font='bold 40px Arial';
+  ctx.textAlign='center';
+  ctx.fillText(`${s1}  ${s2}`, W/2, 50);
 
+  // speed bar
+  const spd=Math.abs(bvx);
+  const bw=Math.floor((spd/MAX_SPEED)*80);
+  ctx.strokeStyle='rgba(200,200,200,0.6)'; ctx.lineWidth=1;
+  ctx.strokeRect(W/2-40,H-16,80,6);
+  ctx.fillStyle=YELLOW;
+  ctx.fillRect(W/2-40,H-16,bw,6);
+
+  // hint
+  ctx.fillStyle='rgba(180,230,180,0.8)';
+  ctx.font='16px Arial';
+  ctx.textAlign='left';
+  ctx.fillText('Move mouse on left half', 10, H-8);
+}
+
+function loop(){
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
 </body>
 </html>
