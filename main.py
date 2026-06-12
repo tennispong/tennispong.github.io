@@ -52,7 +52,7 @@ player1_x = 6
 player1_y = HEIGHT // 2
 player2_x = WIDTH - 6
 player2_y = HEIGHT // 2
-ai_speed  = 16
+ai_speed  = 10
 
 ball_x, ball_y = WIDTH // 2, HEIGHT // 2
 ball_speed_x, ball_speed_y = 6 * random.choice((1,-1)), 6 * random.choice((1,-1))
